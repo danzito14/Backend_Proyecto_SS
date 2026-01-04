@@ -1,0 +1,45 @@
+fastapi==0.116.1
+uvicorn==0.33.0
+
+# Pydantic ecosystem
+pydantic==2.10.6
+pydantic-core==2.27.2
+pydantic-settings==2.8.1
+python-multipart==0.0.20
+python-dotenv==1.0.1
+anyio==4.11.0
+h11==0.16.0
+
+# Database & ORM
+SQLAlchemy==2.0.43
+PyMySQL==1.1.2
+
+# Auth / Security
+passlib==1.7.4
+bcrypt==4.3.0
+python-jose==3.5.0
+email-validator==2.3.0
+
+# Google OAuth2
+google-auth==2.43.0
+cachetools==6.2.2
+pyasn1==0.6.1
+pyasn1-modules==0.4.2
+rsa==4.9.1
+
+# HTTP Clients / JSON
+requests==2.32.3
+httpx==0.28.1
+orjson==3.10.15
+ujson==5.10.0
+
+# Optional utilities
+rich==14.1.0
+watchfiles==0.24.0
+tenacity==9.1.2
+sentry-sdk==2.37.1
+
+# WebSockets (optional)
+python-socketio==5.14.3
+python-engineio==4.12.3
+websockets==13.1

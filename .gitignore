@@ -1,0 +1,66 @@
+# --- ENTORNO PYTHON ---
+__pycache__/
+*.py[cod]
+*.so
+*.pyd
+*.pyo
+
+# Entorno virtual
+.venv/
+venv/
+env/
+
+# Archivos de configuración locales
+.env
+.env.*
+!.env.example    # PERMITIMOS un template
+
+# Archivos generados por Python
+*.log
+*.sqlite3
+*.db
+instance/
+*.pid
+
+# Compilaciones
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# --- FASTAPI / UVICORN ---
+# Si usas directorios para assets temporales:
+uploads/
+temp/
+cache/
+
+# --- SQLALCHEMY ---
+# Migraciones autogeneradas (opcional ignorar)
+#migrations/versions/*.py
+
+# --- IDEs Y EDITORES ---
+# PyCharm / IntelliJ
+.idea/
+
+# VSCode
+.vscode/
+
+# --- SISTEMAS ---
+.DS_Store
+Thumbs.db
+
+# --- TESTING ---
+pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# --- NODE / ANGULAR (si en el futuro tienes carpeta frontend) ---
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Builds de Angular
+dist/
+.angular/
