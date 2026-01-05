@@ -36,6 +36,7 @@ class UsuarioUpdate(BaseModel):
     foto_perfil_url: Optional[str] = None
     id_nvl_usuario: Optional[int] = None
     password: Optional[str] = None
+    estatus: Optional[bool] = None
 
 class UsuarioOut(UsuarioBase):
     id_usuario: str

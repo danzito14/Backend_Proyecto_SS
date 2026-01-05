@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, TIMESTAMP, Enum, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, TIMESTAMP, Enum, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from src.core.db_credentials import Base
@@ -28,5 +28,6 @@ class Usuario(Base):
     provider = Column(Enum('local', 'google'), nullable=False, default='local')
     fecha_creacion = Column(TIMESTAMP, default=datetime.utcnow)
     ultimo_logeo = Column(TIMESTAMP, default=datetime.utcnow)
+    estatus = Column(Boolean, default=0)
 
     nivel = relationship("NivelUsuario", back_populates="usuarios")

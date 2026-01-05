@@ -1,17 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
-from datetime import datetime
+from datetime import datetime, timedelta
 import uuid
 
 from src.core.db_credentials import get_db
 from src.core.segurity import hash_password
+from src.models.email_token_model import EmailToken
 from src.models.usuarios_model import Usuario as UsuarioModel
 from src.schema.usuarios_schema import (
     UsuarioOut,
     UsuarioCreate,
     UsuarioUpdate
 )
+from src.services.email.enviar_correo_activacion_cuenta import enviar_link_activacion
 
 # -------------------------------------------------------------------------------------------------
 # Router Usuarios
@@ -51,14 +53,14 @@ def obtener_usuario(id_usuario: str, db: Session = Depends(get_db)):
 # -------------------------------------------------------------------------------------------------
 # Crear usuario (HASH 🔐)
 # -------------------------------------------------------------------------------------------------
-@router_usuario.post("/", response_model=UsuarioOut, status_code=status.HTTP_201_CREATED)
+@router_usuario.post("/", status_code=status.HTTP_201_CREATED)
 def crear_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
-    # Validar email único
+
     if db.query(UsuarioModel).filter(
         UsuarioModel.email == usuario.email
     ).first():
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=400,
             detail="El email ya está registrado"
         )
 
@@ -68,17 +70,65 @@ def crear_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
         email=usuario.email,
         nombre_completo=usuario.nombre_completo,
         foto_perfil_url=usuario.foto_perfil_url,
-        password_hash=hash_password(usuario.password),  # 🔐 AQUÍ ESTÁ LA CLAVE
+        password_hash=hash_password(usuario.password),
         provider="local",
-        fecha_creacion=datetime.utcnow(),
-        ultimo_logeo=None
+        estatus=0,
+        fecha_creacion=datetime.utcnow()
     )
 
     db.add(nuevo_usuario)
     db.commit()
     db.refresh(nuevo_usuario)
 
-    return nuevo_usuario
+    token = str(uuid.uuid4())
+
+    email_token = EmailToken(
+        id=str(uuid.uuid4()),
+        user_id=nuevo_usuario.id_usuario,
+        token=token,
+        expires_at=datetime.utcnow() + timedelta(minutes=30),
+        used=0
+    )
+
+    db.add(email_token)
+    db.commit()
+
+    enviar_link_activacion(
+        nuevo_usuario.email,
+        nuevo_usuario.nombre_completo,
+        token
+    )
+
+    return {"message": "Usuario creado. Revisa tu correo para activar la cuenta."}
+
+# -----------------------------
+# ACTIVAR CUENTA
+# -----------------------------
+@router_usuario.get("/activar")
+def activar_cuenta(token: str, db: Session = Depends(get_db)):
+
+    registro = db.query(EmailToken).filter(
+        EmailToken.token == token,
+        EmailToken.used == 0
+    ).first()
+
+    if not registro:
+        raise HTTPException(status_code=400, detail="Token inválido")
+
+    if registro.expires_at < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Token expirado")
+
+    usuario = db.query(UsuarioModel).filter(
+        UsuarioModel.id_usuario == registro.user_id
+    ).first()
+
+    usuario.estatus = 1
+    registro.used = 1
+
+    db.commit()
+
+    return {"message": "Cuenta activada correctamente"}
+
 
 
 # -------------------------------------------------------------------------------------------------
