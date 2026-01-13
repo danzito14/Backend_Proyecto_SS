@@ -37,7 +37,7 @@ class OpcionServicio(Base):
     imagenes = relationship("ImagenServicio", back_populates="opcion_servicio", cascade="all, delete-orphan")
 
 
-class ImagenServicio(Base):
+"""class ImagenServicio(Base):
     __tablename__ = 'imagenes_servicios'
 
     id_imagen = Column(String(36), primary_key=True)
@@ -48,5 +48,5 @@ class ImagenServicio(Base):
 
     # Relación
     opcion_servicio = relationship("OpcionServicio", back_populates="imagenes")
-
+"""
 

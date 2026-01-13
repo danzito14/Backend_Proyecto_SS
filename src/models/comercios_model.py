@@ -40,7 +40,7 @@ class Comercio(Base):
     imagenes = relationship("ImagenComercio", back_populates="comercio", cascade="all, delete-orphan")
     servicios = relationship("ServicioComercio", back_populates="comercio", cascade="all, delete-orphan")
 
-
+"""
 class ImagenComercio(Base):
     __tablename__ = 'imagenes_comercio'
 
@@ -51,4 +51,4 @@ class ImagenComercio(Base):
     estatus = Column(Enum('publica', 'privada'))
 
     # Relación inversa
-    comercio = relationship("Comercio", back_populates="imagenes")
+    comercio = relationship("Comercio", back_populates="imagenes")"""

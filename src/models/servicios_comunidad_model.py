@@ -26,7 +26,7 @@ class ServicioComunidad(Base):
     imagenes = relationship("ImagenServicioComunidad", back_populates="servicio_comunidad",
                             cascade="all, delete-orphan")
 
-
+"""
 class ImagenServicioComunidad(Base):
     __tablename__ = 'imagenes_servicios_comunidad'
 
@@ -41,3 +41,4 @@ class ImagenServicioComunidad(Base):
 
     # Relación
     servicio_comunidad = relationship("ServicioComunidad", back_populates="imagenes")
+"""

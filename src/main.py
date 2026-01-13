@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import os
 
 
+
 # ✅ Cargar el archivo .env
 load_dotenv()
 
@@ -23,8 +24,12 @@ from src.routers.opciones_servicio_router import router_opcion
 from src.routers.brigadistas_asesor_router import router_brigadista, router_asesor, router_carrera
 from src.routers.categorias_comercio_router import router_categoria
 from src.routers.servicios_comunidad_model import router_servicio_comunidad
+from src.routers.imagenes_general_router import router as router_imagen_general
+from src.routers.imagenes_servicios_router import router as router_imagen_servicio
+from src.routers.imagenes_comercio_router import router as router_imagen_comercio
+from src.routers.imagenes_servicios_comunidad_router import router as router_imagen_servicio_comunidad
 from src.core.db_credentials import SessionLocal
-
+from src.routers.login_router import router_login
 app = FastAPI(title="Proyecto del Servicio Social",
               description="Proyecto Comunitarios para el apoyo de la publicidad de los comercios de Ruiz Cortinez",
               version="0.0.1")
@@ -61,3 +66,10 @@ app.include_router(router_asesor)
 app.include_router(router_carrera)
 app.include_router(router_categoria)
 app.include_router(router_servicio_comunidad)
+app.include_router(router_imagen_servicio_comunidad)
+app.include_router(router_imagen_servicio)
+app.include_router(router_imagen_general)
+app.include_router(router_imagen_comercio)
+
+
+app.include_router(router_login)
