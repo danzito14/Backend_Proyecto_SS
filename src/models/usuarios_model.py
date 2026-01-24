@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, TIMESTAMP, Enum, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, Text, TIMESTAMP, Enum, ForeignKey, Boolean, UniqueConstraint
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from src.core.db_credentials import Base
@@ -31,3 +31,10 @@ class Usuario(Base):
     estatus = Column(Boolean, default=0)
 
     nivel = relationship("NivelUsuario", back_populates="usuarios")
+    # ✅ Agregar este relationship
+    tokens = relationship("EmailToken", back_populates="usuario", cascade="all, delete-orphan")
+
+    # Constraint única compuesta
+    __table_args__ = (
+        UniqueConstraint('email', 'estatus', name='uq_email_activo'),
+    )

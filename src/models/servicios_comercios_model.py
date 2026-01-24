@@ -37,16 +37,3 @@ class OpcionServicio(Base):
     imagenes = relationship("ImagenServicio", back_populates="opcion_servicio", cascade="all, delete-orphan")
 
 
-"""class ImagenServicio(Base):
-    __tablename__ = 'imagenes_servicios'
-
-    id_imagen = Column(String(36), primary_key=True)
-    id_opcion_servicio = Column(String(36), ForeignKey('opciones_servicio.id_opcion_servicio', ondelete='CASCADE'),
-                                nullable=False)
-    imagen_url = Column(Text, nullable=False)
-    created_at = Column(TIMESTAMP, default=datetime.utcnow)
-
-    # Relación
-    opcion_servicio = relationship("OpcionServicio", back_populates="imagenes")
-"""
-

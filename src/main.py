@@ -30,13 +30,15 @@ from src.routers.imagenes_comercio_router import router as router_imagen_comerci
 from src.routers.imagenes_servicios_comunidad_router import router as router_imagen_servicio_comunidad
 from src.core.db_credentials import SessionLocal
 from src.routers.login_router import router_login
+from src.routers.mis_comercios import router_mcomercio
+from src.routers.activar_cuenta_router import router_activar
+
 app = FastAPI(title="Proyecto del Servicio Social",
               description="Proyecto Comunitarios para el apoyo de la publicidad de los comercios de Ruiz Cortinez",
               version="0.0.1")
 # Primero CORS
 app.add_middleware(
     CORSMiddleware,
-    #allow_origins=["http://localhost:4200", "http://127.0.0.1:4200", '*'],  # ambos por seguridad
     allow_origins=['*'],  # ambos por seguridad
     allow_credentials=False,
     allow_methods=["*"],
@@ -73,3 +75,6 @@ app.include_router(router_imagen_comercio)
 
 
 app.include_router(router_login)
+
+app.include_router(router_activar)
+app.include_router(router_mcomercio)
