@@ -5,6 +5,7 @@ import uuid
 from datetime import datetime
 
 from src.core.db_credentials import get_db
+from src.models.imagenes_servicios_model import ImagenServicio
 from src.models.servicios_comercios_model import OpcionServicio as OpcionServicioModel
 from src.models.servicios_comercios_model import ServicioComercio as ServicioComercioModel
 from src.schema.servicios_comercio_schema import (
@@ -12,6 +13,7 @@ from src.schema.servicios_comercio_schema import (
     OpcionServicioUpdate,
     OpcionServicioOut
 )
+from src.services.cloud.cloudinary_service import eliminar_imagenes_cloudinary
 
 router_opcion = APIRouter(prefix="/opciones-servicio", tags=["Opciones Servicio"])
 
@@ -90,15 +92,42 @@ def actualizar_opcion(id_opcion_servicio: str, opcion: OpcionServicioUpdate, db:
     db.refresh(db_opcion)
     return db_opcion
 
+
 # ── Eliminar opción ────────────────────────────────────
 @router_opcion.delete("/{id_opcion_servicio}", status_code=status.HTTP_204_NO_CONTENT)
 def eliminar_opcion(id_opcion_servicio: str, db: Session = Depends(get_db)):
+    # 1. Verificar que existe
     db_opcion = db.query(OpcionServicioModel).filter(
         OpcionServicioModel.id_opcion_servicio == id_opcion_servicio
     ).first()
+
     if not db_opcion:
         raise HTTPException(status_code=404, detail="Opción de servicio no encontrada")
 
+    # 2. RECOLECTAR URLs de imágenes ANTES de eliminar
+    imagenes_a_eliminar = []
+
+    imagenes = db.query(ImagenServicio).filter(
+        ImagenServicio.id_opcion_servicio == id_opcion_servicio
+    ).all()
+
+    for imagen in imagenes:
+        if imagen.imagen_url:
+            imagenes_a_eliminar.append(imagen.imagen_url)
+
+    # 3. ELIMINAR de Cloudinary
+    if imagenes_a_eliminar:
+        resultado = eliminar_imagenes_cloudinary(imagenes_a_eliminar)
+        print(f"""
+        ═══════════════════════════════════════
+        OPCIÓN ELIMINADA: {db_opcion.nombre_opcion}
+        ID: {id_opcion_servicio}
+        Imágenes eliminadas: {resultado['exitosas']}/{resultado['total']}
+        ═══════════════════════════════════════
+        """)
+
+    # 4. ELIMINAR de la base de datos (cascade elimina las imágenes)
     db.delete(db_opcion)
     db.commit()
+
     return None

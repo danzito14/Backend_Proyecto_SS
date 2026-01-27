@@ -5,13 +5,15 @@ import uuid
 from datetime import datetime
 
 from src.core.db_credentials import get_db
-from src.models.servicios_comercios_model import ServicioComercio as ServicioComercioModel
+from src.models.servicios_comercios_model import ServicioComercio as ServicioComercioModel, OpcionServicio as OpcionServicioModel
 from src.models.comercios_model import Comercio as ComercioModel
 from src.schema.servicios_comercio_schema import (
     ServicioComercioCreate,
     ServicioComercioUpdate,
     ServicioComercioOut
 )
+from src.services.cloud.cloudinary_service import eliminar_imagenes_cloudinary
+from src.models.imagenes_servicios_model import ImagenServicio
 
 router_servicio = APIRouter(prefix="/servicios-comercio", tags=["Servicios Comercio"])
 
@@ -60,13 +62,50 @@ def actualizar_servicio(id_servicio: str, servicio: ServicioComercioUpdate, db: 
     db.refresh(db_servicio)
     return db_servicio
 
+
 # ── Eliminar servicio ────────────────────────────────────
 @router_servicio.delete("/{id_servicio}", status_code=status.HTTP_204_NO_CONTENT)
 def eliminar_servicio(id_servicio: str, db: Session = Depends(get_db)):
-    db_servicio = db.query(ServicioComercioModel).filter(ServicioComercioModel.id_servicio == id_servicio).first()
+    # 1. Verificar que existe
+    db_servicio = db.query(ServicioComercioModel).filter(
+        ServicioComercioModel.id_servicio == id_servicio
+    ).first()
+
     if not db_servicio:
         raise HTTPException(status_code=404, detail="Servicio no encontrado")
 
+    # 2. RECOLECTAR todas las URLs de imágenes ANTES de eliminar
+    imagenes_a_eliminar = []
+
+    # Obtener todas las opciones del servicio
+    opciones = db.query(OpcionServicioModel).filter(
+        OpcionServicioModel.id_servicio == id_servicio
+    ).all()
+
+    # Por cada opción, obtener sus imágenes
+    for opcion in opciones:
+        imagenes_opcion = db.query(ImagenServicio).filter(
+            ImagenServicio.id_opcion_servicio == opcion.id_opcion_servicio
+        ).all()
+
+        for imagen in imagenes_opcion:
+            if imagen.imagen_url:
+                imagenes_a_eliminar.append(imagen.imagen_url)
+
+    # 3. ELIMINAR de Cloudinary
+    if imagenes_a_eliminar:
+        resultado = eliminar_imagenes_cloudinary(imagenes_a_eliminar)
+        print(f"""
+        ═══════════════════════════════════════
+        SERVICIO ELIMINADO: {db_servicio.nombre}
+        ID: {id_servicio}
+        Opciones eliminadas: {len(opciones)}
+        Imágenes eliminadas: {resultado['exitosas']}/{resultado['total']}
+        ═══════════════════════════════════════
+        """)
+
+    # 4. ELIMINAR de la base de datos (cascade elimina opciones e imágenes)
     db.delete(db_servicio)
     db.commit()
+
     return None

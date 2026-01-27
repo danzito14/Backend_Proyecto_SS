@@ -5,10 +5,15 @@ from datetime import datetime
 from typing import List
 
 from src.core.db_credentials import get_db
+from src.models import OpcionServicio, ServicioComercio
 from src.models.comercios_model import Comercio as ComercioModel
 from src.models.comercios_model import CategoriaComercio as CategoriaComercioModel
+from src.models.imagenes_servicios_model import ImagenServicio
 from src.schema.comercios_schema import ComercioCreate, ComercioUpdate, ComercioOut
 from src.core.jwt_managger import  get_current_user  # Importar dependencia de seguridad
+from src.services.cloud.cloudinary_service import eliminar_imagenes_cloudinary
+from src.models.imagenes_comercio_model import ImagenComercio as ImagenComercioModel
+
 
 router_comercio = APIRouter(prefix="/comercios", tags=["Comercios"])
 
@@ -147,32 +152,83 @@ def actualizar_comercio(
     return db_comercio
 
 
-# ── Eliminar (requiere autenticación y ser dueño) ─────────
 @router_comercio.delete("/{id_comercio}", status_code=status.HTTP_204_NO_CONTENT)
 def eliminar_comercio(
         id_comercio: str,
         db: Session = Depends(get_db),
-        current_user: str = Depends(get_current_user)  # 🔒 Protegido
+        current_user: str = Depends(get_current_user)  # Si usas autenticación
 ):
-    """
-    Elimina un comercio.
-    Solo el dueño puede eliminar su comercio.
-    """
+    # 1. Verificar que existe
     db_comercio = db.query(ComercioModel).filter(
         ComercioModel.id_comercio == id_comercio
     ).first()
+
     if not db_comercio:
-        raise HTTPException(
-            status_code=404,
-            detail="Comercio no encontrado"
-        )
+        raise HTTPException(status_code=404, detail="Comercio no encontrado")
 
-    # Verificar que el usuario autenticado sea el dueño
+    # 2. Verificar propiedad (si usas autenticación)
     if db_comercio.id_usuario != current_user:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="No tienes permiso para eliminar este comercio"
-        )
+        raise HTTPException(status_code=403, detail="No tienes permiso para eliminar este comercio")
 
+    # 3. RECOLECTAR TODAS las URLs de imágenes
+    imagenes_a_eliminar = []
+
+    # a) Imagen de portada del comercio
+    if db_comercio.imagen_url and "cloudinary.com" in db_comercio.imagen_url:
+        imagenes_a_eliminar.append(db_comercio.imagen_url)
+
+    # b) Imágenes de la tabla imagenes_comercio
+    imagenes_comercio = db.query(ImagenComercioModel).filter(
+        ImagenComercioModel.id_comercio == id_comercio
+    ).all()
+
+    for img in imagenes_comercio:
+        if img.imagen_url:
+            imagenes_a_eliminar.append(img.imagen_url)
+
+    # c) Imágenes de opciones de servicios
+    servicios = db.query(ServicioComercio).filter(
+        ServicioComercio.id_comercio == id_comercio
+    ).all()
+
+    total_opciones = 0
+    total_servicios = len(servicios)
+
+    for servicio in servicios:
+        opciones = db.query(OpcionServicio).filter(
+            OpcionServicio.id_servicio == servicio.id_servicio
+        ).all()
+
+        total_opciones += len(opciones)
+
+        for opcion in opciones:
+            imagenes_opcion = db.query(ImagenServicio).filter(
+                ImagenServicio.id_opcion_servicio == opcion.id_opcion_servicio
+            ).all()
+
+            for img in imagenes_opcion:
+                if img.imagen_url:
+                    imagenes_a_eliminar.append(img.imagen_url)
+
+    # 4. ELIMINAR de Cloudinary
+    resultado_cloudinary = {'exitosas': 0, 'total': 0}
+    if imagenes_a_eliminar:
+        resultado_cloudinary = eliminar_imagenes_cloudinary(imagenes_a_eliminar)
+
+    # 5. ELIMINAR de la base de datos (cascade elimina todo lo demás)
     db.delete(db_comercio)
     db.commit()
+
+    # 6. Log del resultado
+    print(f"""
+    ═══════════════════════════════════════════════════════
+    COMERCIO ELIMINADO: {db_comercio.nombre_comercio}
+    ID: {id_comercio}
+    ───────────────────────────────────────────────────────
+    Servicios eliminados: {total_servicios}
+    Opciones eliminadas: {total_opciones}
+    Imágenes en Cloudinary: {resultado_cloudinary['exitosas']}/{resultado_cloudinary['total']}
+    ═══════════════════════════════════════════════════════
+    """)
+
+    return None

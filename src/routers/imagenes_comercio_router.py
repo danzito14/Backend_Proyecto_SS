@@ -1,13 +1,15 @@
+# src/routes/imagenes_comercio_routes.py
+
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 import uuid
 
 from src.core.db_credentials import get_db
-from src.services.cloud.cloudinary_service import upload_images
+from src.services.cloud.cloudinary_service import upload_images, eliminar_imagen_cloudinary
 from src.models.imagenes_comercio_model import ImagenComercio
 from src.models.comercios_model import Comercio as ComercioModel
-from src.core.jwt_managger import get_current_user  # Importar seguridad
+from src.core.jwt_managger import get_current_user
 
 router = APIRouter(
     prefix="/imagenes-comercios",
@@ -20,10 +22,11 @@ def upload_imagenes_comercio(
         id_comercio: str,
         files: List[UploadFile] = File(...),
         db: Session = Depends(get_db),
-        current_user: str = Depends(get_current_user)  # 🔒 Protegido
+        current_user: str = Depends(get_current_user)
 ):
     """
     Sube imágenes para un comercio específico.
+    Si el comercio ya tiene imagen de portada, la elimina de Cloudinary antes de subir la nueva.
     Solo el dueño del comercio puede subir imágenes.
     """
     # Verificar que el comercio existe
@@ -57,10 +60,10 @@ def upload_imagenes_comercio(
                        f"Usa: {', '.join(ALLOWED_TYPES)}"
             )
 
-        # Validar tamaño (lectura parcial para no cargar todo en memoria)
-        file.file.seek(0, 2)  # Ir al final del archivo
-        file_size = file.file.tell()  # Obtener posición = tamaño
-        file.file.seek(0)  # Volver al inicio
+        # Validar tamaño
+        file.file.seek(0, 2)
+        file_size = file.file.tell()
+        file.file.seek(0)
 
         if file_size > MAX_FILE_SIZE:
             raise HTTPException(
@@ -69,7 +72,14 @@ def upload_imagenes_comercio(
             )
 
     try:
-        # Subir imágenes a Cloudinary
+        # ✅ ELIMINAR IMAGEN ANTERIOR si existe
+        if comercio.imagen_url and "cloudinary.com" in comercio.imagen_url:
+            # Verificar que no sea la imagen placeholder por defecto
+            if "placeholder" not in comercio.imagen_url:
+                print(f"🗑️ Eliminando imagen anterior de portada: {comercio.imagen_url}")
+                eliminar_imagen_cloudinary(comercio.imagen_url)
+
+        # Subir imágenes nuevas a Cloudinary
         results = upload_images(files, folder=f"comercios/{id_comercio}")
 
         # Guardar referencias en la base de datos
@@ -109,10 +119,10 @@ def upload_imagenes_comercio(
 def eliminar_imagen_comercio(
         id_imagen: str,
         db: Session = Depends(get_db),
-        current_user: str = Depends(get_current_user)  # 🔒 Protegido
+        current_user: str = Depends(get_current_user)
 ):
     """
-    Elimina una imagen de comercio.
+    Elimina una imagen de comercio de Cloudinary y BD.
     Solo el dueño del comercio puede eliminar sus imágenes.
     """
     # Buscar la imagen
@@ -138,10 +148,12 @@ def eliminar_imagen_comercio(
         )
 
     try:
-        # Eliminar de Cloudinary (opcional, implementar si es necesario)
-        # cloudinary.uploader.destroy(imagen.public_id)
+        # 1. ELIMINAR de Cloudinary PRIMERO
+        if imagen.imagen_url:
+            print(f"🗑️ Eliminando imagen de galería: {imagen.imagen_url}")
+            eliminar_imagen_cloudinary(imagen.imagen_url)
 
-        # Eliminar de la base de datos
+        # 2. ELIMINAR de la base de datos
         db.delete(imagen)
         db.commit()
 
