@@ -31,7 +31,7 @@ def obtener_servicio(id_servicio: str, db: Session = Depends(get_db)):
     return servicio
 
 # ── Crear servicio ───────────────────────────────────────
-@router_servicio.post("/", response_model=ServicioComercioOut, status_code=status.HTTP_201_CREATED)
+@router_servicio.post("/nuevo_servicio", response_model=ServicioComercioOut, status_code=status.HTTP_201_CREATED)
 def crear_servicio(servicio: ServicioComercioCreate, db: Session = Depends(get_db)):
     # Validar que el comercio exista
     comercio = db.query(ComercioModel).filter(ComercioModel.id_comercio == servicio.id_comercio).first()
