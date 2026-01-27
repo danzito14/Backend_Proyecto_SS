@@ -33,7 +33,7 @@ def obtener_opcion(id_opcion_servicio: str, db: Session = Depends(get_db)):
     return opcion
 
 # ── Crear opción ───────────────────────────────────────
-@router_opcion.post("/", response_model=OpcionServicioOut, status_code=status.HTTP_201_CREATED)
+@router_opcion.post("/crear_opcion", response_model=OpcionServicioOut, status_code=status.HTTP_201_CREATED)
 def crear_opcion(opcion: OpcionServicioCreate, db: Session = Depends(get_db)):
     # Verificar que el servicio exista
     servicio = db.query(ServicioComercioModel).filter(
