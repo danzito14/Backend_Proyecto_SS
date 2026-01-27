@@ -69,5 +69,5 @@ def activar_cuenta(token: str, db: Session = Depends(get_db)):
 
     db.commit()
 
-    return RedirectResponse(url="http://localhost:4200/")
+    return RedirectResponse(url="https://proyectoss-production.up.railway.app")
 
