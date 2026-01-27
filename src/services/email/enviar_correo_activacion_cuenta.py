@@ -15,7 +15,7 @@ def enviar_link_activacion(email: str, nombre: str, token: str):
         sib_api_v3_sdk.ApiClient(configuration)
     )
 
-    link = f"http://localhost:8000/activar/activar?token={token}"
+    link = f"https://backendproyectoss-production.up.railway.app/activar/activar?token={token}"
 
     html_content = f"""
     <!DOCTYPE html>
