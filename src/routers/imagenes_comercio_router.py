@@ -48,7 +48,7 @@ def upload_imagenes_comercio(
         )
 
     # Validar archivos
-    MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+    MAX_FILE_SIZE = 15 * 1024 * 1024  # 15MB
     ALLOWED_TYPES = ["image/jpeg", "image/png", "image/jpg", "image/webp"]
 
     for file in files:
