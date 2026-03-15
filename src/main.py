@@ -37,7 +37,7 @@ app = FastAPI(
 # Obtén los orígenes permitidos desde variables de entorno
 ALLOWED_ORIGINS = os.getenv(
     "ALLOWED_ORIGINS",
-    "https://proyectoss-production.up.railway.app/,http://localhost:4200,http://localhost:4000"
+    "https://proyectoss-production.up.railway.app,http://localhost:4200,http://localhost:4000"
 ).split(",")
 
 app.add_middleware(
