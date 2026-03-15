@@ -35,11 +35,13 @@ app = FastAPI(
 
 # ✅ CONFIGURACIÓN CORS CORREGIDA
 # Obtén los orígenes permitidos desde variables de entorno
-ALLOWED_ORIGINS = os.getenv(
-    "ALLOWED_ORIGINS",
-    "https://proyectoss-production.up.railway.app,http://localhost:4200,http://localhost:4000"
-).split(",")
-
+ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv(
+        "ALLOWED_ORIGINS",
+        "https://proyectoss-production.up.railway.app,http://localhost:4200"
+    ).split(",")
+]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,  # ✅ Lista específica de orígenes

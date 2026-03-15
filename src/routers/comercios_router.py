@@ -24,6 +24,16 @@ def obtener_comercios(db: Session = Depends(get_db)):
     """Endpoint público - no requiere autenticación"""
     return db.query(ComercioModel).all()
 
+# ── Obtener uno por usuario (privado) ──────────────────────────
+@router_comercio.get("/miscomercios", response_model=List[ComercioOut])
+def obtener_comercio(db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
+    """Endpoint privado - requiere autenticación"""
+    comercio = db.query(ComercioModel).filter(
+        ComercioModel.id_usuario == current_user
+    ).all()
+    if not comercio:
+        raise HTTPException(status_code=404, detail="Comercio no encontrado")
+    return comercio
 
 # ── Obtener uno por ID (público) ──────────────────────────
 @router_comercio.get("/{id_comercio}", response_model=ComercioOut)
@@ -36,16 +46,6 @@ def obtener_comercio(id_comercio: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Comercio no encontrado")
     return comercio
 
-# ── Obtener uno por usuario (privado) ──────────────────────────
-@router_comercio.get("/miscomercios", response_model=List[ComercioOut])
-def obtener_comercio(db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
-    """Endpoint privado - requiere autenticación"""
-    comercio = db.query(ComercioModel).filter(
-        ComercioModel.id_usuario == current_user
-    ).all()
-    if not comercio:
-        raise HTTPException(status_code=404, detail="Comercio no encontrado")
-    return comercio
 
 # ── Crear (requiere autenticación) ────────────────────────
 @router_comercio.post(
