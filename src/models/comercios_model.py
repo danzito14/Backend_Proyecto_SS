@@ -36,6 +36,6 @@ class Comercio(Base):
     id_usuario = Column(String(36), nullable=False)
 
     # Relaciones
-    categoria = relationship("CategoriaComercio", back_populates="comercios")
-    imagenes = relationship("ImagenComercio", back_populates="comercio", cascade="all, delete-orphan")
-    servicios = relationship("ServicioComercio", back_populates="comercio", cascade="all, delete-orphan")
+    # categoria = relationship("CategoriaComercio", back_populates="comercios")
+    # imagenes = relationship("ImagenComercio", back_populates="comercio", cascade="all, delete-orphan")
+    # servicios = relationship("ServicioComercio", back_populates="comercio", cascade="all, delete-orphan")
